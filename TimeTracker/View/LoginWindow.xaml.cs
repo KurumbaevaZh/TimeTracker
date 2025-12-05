@@ -21,10 +21,9 @@ namespace TimeTracker.View
     /// </summary>
     public partial class LoginWindow : Window
     {
-        public LoginWindow(LoginViewModel viewModel)
+        public LoginWindow()
         {
             InitializeComponent();
-            DataContext = viewModel;
         }
 
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
