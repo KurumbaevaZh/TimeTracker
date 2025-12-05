@@ -11,28 +11,21 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using System.Windows.Controls;
+using TimeTracker.Models;
 using TimeTracker.ViewModels;
 
 namespace TimeTracker.View
 {
     /// <summary>
-    /// Логика взаимодействия для LoginWindow.xaml
+    /// Логика взаимодействия для TaskManagerWindow.xaml
     /// </summary>
-    public partial class LoginWindow : Window
+    public partial class TaskManagerWindow : Window
     {
-        public LoginWindow(LoginViewModel viewModel)
+        public TaskManagerWindow(Employee currentEmployee)
         {
             InitializeComponent();
-            DataContext = viewModel;
-        }
-
-        private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
-        {
-            if (DataContext is LoginViewModel viewModel)
-            {
-                viewModel.Password = PasswordBox.Password;
-            }
+            var dbContext = new AppDbContext();
+            DataContext = new TaskManagerViewModel(dbContext, currentEmployee);
         }
     }
 }

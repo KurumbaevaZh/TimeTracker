@@ -1,0 +1,70 @@
+﻿<Window x:Class="TimeTracker.View.TaskManagerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TimeTracker.View"
+        mc:Ignorable="d"
+        Title="TaskManagerWindow" Height="450" Width="800">
+    <Grid Margin="10">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <!-- Панель фильтров -->
+            <GroupBox Grid.Row="0" Header="Фильтры" Margin="0,0,0,10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                         Width="200" Margin="5" Padding="5"/>
+
+                    <ComboBox ItemsSource="{Binding Projects}" 
+                          SelectedItem="{Binding SelectedProjectFilter}"
+                          DisplayMemberPath="Name"
+                          Width="150" Margin="5" />
+
+                    <ComboBox ItemsSource="{Binding StatusFilters}" 
+                          SelectedItem="{Binding SelectedStatusFilter}"
+                          Width="120" Margin="5"/>
+
+                    <Button Content="Обновить" Command="{Binding LoadTasksCommand}"
+                        Width="80" Margin="5"/>
+                </StackPanel>
+            </GroupBox>
+
+            <!-- Панель действий -->
+            <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+                <Button Content="Создать задачу" Command="{Binding CreateTaskCommand}"
+                    Width="120" Margin="0,0,10,0"/>
+                <Button Content="Редактировать" Command="{Binding EditTaskCommand}"
+                    Width="100" Margin="0,0,10,0"/>
+                <Button Content="Удалить" Command="{Binding DeleteTaskCommand}"
+                    Width="80" Margin="0,0,10,0"/>
+                <Button Content="Сменить статус" Command="{Binding ChangeStatusCommand}"
+                    Width="100"/>
+            </StackPanel>
+
+            <!-- Список задач -->
+            <DataGrid Grid.Row="2" 
+                  ItemsSource="{Binding Tasks}"
+                  SelectedItem="{Binding SelectedTask}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  IsReadOnly="True">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="200"/>
+                    <DataGridTextColumn Header="Проект" Binding="{Binding Project.Name}" Width="150"/>
+                    <DataGridTextColumn Header="Исполнитель" Binding="{Binding Assignee.FirstName}" Width="120"/>
+                    <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="100"/>
+                    <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <!-- Статус бар -->
+            <StatusBar Grid.Row="3">
+                <TextBlock Text="{Binding Tasks.Count, StringFormat=Всего задач: {0}}"/>
+            </StatusBar>
+        </Grid>
+</Window>

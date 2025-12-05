@@ -6,6 +6,7 @@
         xmlns:local="clr-namespace:TimeTracker.View"
         mc:Ignorable="d"
         Title="LoginWindow" Height="400" Width="400">
+    
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="114,51,0,0" Text="Email" VerticalAlignment="Top"/>
         <TextBox HorizontalAlignment="Left" Margin="114,93,0,0" TextWrapping="Wrap" Text="{Binding Email, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Top" Width="154" Height="28"/>

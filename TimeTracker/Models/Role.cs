@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TimeTracker.Models
 {
-    internal class Role
+    public class Role
     {
         public int Id { get; set; }
         public string Name { get; set; }

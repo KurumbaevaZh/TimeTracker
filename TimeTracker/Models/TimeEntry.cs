@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace TimeTracker.Models
 {
-    internal class TimeEntry
+    public class TimeEntry
     {
         public int Id { get; set; }
         public DateTime StartTime { get; set; }

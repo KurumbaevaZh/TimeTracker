@@ -6,11 +6,12 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using TimeTracker.Models;
 using TimeTracker.Services;
 
 namespace TimeTracker.ViewModels
 {
-    internal class LoginViewModel : INotifyPropertyChanged
+    public class LoginViewModel : INotifyPropertyChanged
     {
         private readonly AuthService _authService;
 
@@ -21,7 +22,7 @@ namespace TimeTracker.ViewModels
             set => SetProperty(ref _email, value);
         }
 
-        private string _password;
+        private string _password ;
         public string Password
         {
             get => _password;
@@ -36,12 +37,14 @@ namespace TimeTracker.ViewModels
         }
 
         public RelayCommand LoginCommand { get; private set; }
-        public event Action Done;
+        public event Action<Employee> LoginSuccess;
 
         public LoginViewModel(AuthService authService)
         {
             _authService = authService;
             LoginCommand = new RelayCommand(OnLogin, CanLogin);
+            Email = "admin@company.com";
+            Password = "123";
         }
 
         private bool CanLogin()
@@ -58,8 +61,7 @@ namespace TimeTracker.ViewModels
                 if (employee != null)
                 {
                     ErrorMessage = string.Empty;
-                    MessageBox.Show($"Добро пожаловать, {employee.FirstName}!", "Успешный вход");
-                    Done?.Invoke();
+                    LoginSuccess?.Invoke(employee); // Вызываем LoginSuccess
                 }
                 else
                 {

@@ -8,7 +8,7 @@ using TimeTracker.Models;
 
 namespace TimeTracker.Services
 {
-    internal class AuthService
+    public class AuthService
     {
         private readonly AppDbContext _context;
 

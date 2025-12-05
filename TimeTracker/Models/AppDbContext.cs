@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace TimeTracker.Models
 {
-    internal class AppDbContext : DbContext
+    public class AppDbContext : DbContext
     {
         public DbSet<Employee> Employees { get; set; }
         public DbSet<Department> Departments { get; set; }
