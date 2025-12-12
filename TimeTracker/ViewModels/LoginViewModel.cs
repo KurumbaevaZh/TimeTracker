@@ -61,7 +61,7 @@ namespace TimeTracker.ViewModels
                 if (employee != null)
                 {
                     ErrorMessage = string.Empty;
-                    LoginSuccess?.Invoke(employee); // Вызываем LoginSuccess
+                    LoginSuccess?.Invoke(employee); 
                 }
                 else
                 {

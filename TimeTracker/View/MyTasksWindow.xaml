@@ -1,0 +1,65 @@
+﻿<Window x:Class="TimeTracker.View.MyTasksWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TimeTracker.View"
+        mc:Ignorable="d"
+        Title="MyTasksWindow" Height="450" Width="800">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="МОИ ЗАДАЧИ" 
+                   FontSize="18" FontWeight="Bold" 
+                   HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <GroupBox Grid.Row="1" Header="Поиск и фильтры" Margin="0,0,0,10">
+            <StackPanel Orientation="Horizontal">
+                <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" 
+                         Width="200" Margin="5" Padding="5"/>
+
+                <ComboBox ItemsSource="{Binding StatusFilters}" 
+                          SelectedItem="{Binding SelectedStatusFilter}"
+                          Width="120" Margin="5"/>
+
+                <Button Content="Обновить список" Command="{Binding LoadTasksCommand}"
+                        Width="179" Margin="5"/>
+            </StackPanel>
+        </GroupBox>
+
+        <DataGrid Grid.Row="2" 
+                  ItemsSource="{Binding MyTasks}"
+                  SelectedItem="{Binding SelectedTask}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  Margin="0,0,0,10">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Название" Binding="{Binding Title}" Width="200"/>
+                <DataGridTextColumn Header="Статус" Binding="{Binding Status}" Width="100"/>
+                <DataGridTextColumn Header="Описание" Binding="{Binding Description}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
+            <Button Content="Начать задачу" Command="{Binding StartTaskCommand}"
+                    Width="110" Height="30" Margin="5"/>
+
+            <Button Content="Завершить задачу" Command="{Binding CompleteTaskCommand}"
+                    Width="120" Height="30" Margin="5"/>
+
+            <Button Content="Добавить комментарий" Command="{Binding AddCommentCommand}"
+                    Width="140" Height="30" Margin="5"/>
+        </StackPanel>
+
+        <StatusBar Grid.Row="4">
+            <TextBlock Text="{Binding MyTasks.Count, StringFormat=Всего задач: {0}}"/>
+        </StatusBar>
+    </Grid>
+</Window>
