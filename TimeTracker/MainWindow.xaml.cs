@@ -103,11 +103,22 @@ namespace TimeTracker
         {
             if (_currentEmployee.RoleId == 2) 
             {
-                
+                try
+                {
+                    var teamManagementWindow = new TeamManagementWindow(_currentEmployee);
+                    teamManagementWindow.Owner = this; 
+                    teamManagementWindow.Show();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Ошибка при открытии окна управления отделом: {ex.Message}",
+                                  "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             else
             {
-                MessageBox.Show("Эта функция доступна только руководителям отделов");
+                MessageBox.Show("Эта функция доступна только руководителям отделов",
+                              "Доступ запрещен", MessageBoxButton.OK, MessageBoxImage.Warning);
             }
         }
     }

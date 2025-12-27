@@ -130,7 +130,6 @@ namespace TimeTracker.ViewModels
                 }
                 else
                 {
-                    ReportText += "За выбранный период не найдено записей рабочего времени.\n";
                 }
 
                 ReportText += "\nВЫПОЛНЕННЫЕ ЗАДАЧИ:\n\n";

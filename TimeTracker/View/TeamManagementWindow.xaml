@@ -6,7 +6,32 @@
         xmlns:local="clr-namespace:TimeTracker.View"
         mc:Ignorable="d"
         Title="TeamManagementWindow" Height="450" Width="800">
-    <Grid>
-        
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="СОТРУДНИКИ ОТДЕЛА" 
+                   FontSize="18" FontWeight="Bold" 
+                   HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+        <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding TeamEmployees}"
+                  SelectedItem="{Binding SelectedEmployee}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Фамилия" Binding="{Binding LastName}" Width="120"/>
+                <DataGridTextColumn Header="Имя" Binding="{Binding FirstName}" Width="100"/>
+                <DataGridTextColumn Header="Должность" Binding="{Binding Position}" Width="150"/>
+                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="200"/>
+                <DataGridTextColumn Header="Дата регистрации" 
+                                  Binding="{Binding CreatedAt, StringFormat=\{0:dd.MM.yyyy\}}" 
+                                  Width="110"/>
+            </DataGrid.Columns>
+        </DataGrid>
     </Grid>
 </Window>

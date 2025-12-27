@@ -11,6 +11,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using TimeTracker.Models;
+using TimeTracker.ViewModels;
 
 namespace TimeTracker.View
 {
@@ -19,9 +21,22 @@ namespace TimeTracker.View
     /// </summary>
     public partial class TeamManagementWindow : Window
     {
-        public TeamManagementWindow()
+        public TeamManagementWindow(Employee currentEmployee)
         {
             InitializeComponent();
+            if (currentEmployee.RoleId != 2) 
+            {
+                MessageBox.Show("Доступ запрещен. Только руководители отделов могут использовать эту функцию.",
+                              "Ошибка доступа", MessageBoxButton.OK, MessageBoxImage.Warning);
+                this.Close();
+                return;
+            }
+            var dbContext = new AppDbContext();
+            DataContext = new TeamManagementViewModel(dbContext, currentEmployee);
+        }
+        private void BackButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
         }
     }
 }
