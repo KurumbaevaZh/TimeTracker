@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTracker.View"
         mc:Ignorable="d"
-        Title="TimeTrackerWindow" Height="450" Width="800">
+        Title="Учет времени" Height="450" Width="600">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -16,7 +16,7 @@
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Text="{Binding WorkStatus}" 
-                   FontSize="20" FontWeight="Bold" 
+                   FontSize="16" FontWeight="Bold" 
                    HorizontalAlignment="Center" Margin="0,0,0,20"
                    Foreground="DarkBlue"/>
 
@@ -44,29 +44,12 @@
 
             <Button Content="ЗАКОНЧИТЬ РАБОЧИЙ ДЕНЬ" 
                     Command="{Binding EndWorkDayCommand}"
-                    Width="252" Height="40" Margin="10" FontWeight="Bold"/>
+                    Width="252" Height="40" Margin="10" FontWeight="Bold" IsEnabled="{Binding IsWorkDayStarted}"/>
         </StackPanel>
 
-        <Border Grid.Row="3" Background="LightYellow" 
-                CornerRadius="5" Padding="15" Margin="0,0,0,20">
-            <StackPanel>
-                <TextBlock Text="Сводка за сегодня" 
-                          FontWeight="Bold" FontSize="14" Margin="0,0,0,5"/>
-                <TextBlock Text="{Binding TodaySummary}" FontSize="14"/>
-            </StackPanel>
-        </Border>
-
-        <Border Grid.Row="4" BorderBrush="LightGray" BorderThickness="1" 
-                CornerRadius="5" Padding="10">
-            <StackPanel>
-                <TextBlock Text="Инструкция:" FontWeight="Bold" Margin="0,0,0,5"/>
-                <TextBlock Text="1. Нажмите 'НАЧАТЬ РАБОЧИЙ ДЕНЬ' когда приходите на работу" 
-                          TextWrapping="Wrap" Margin="0,2"/>
-                <TextBlock Text="2. Нажмите 'ЗАКОНЧИТЬ РАБОЧИЙ ДЕНЬ' когда уходите с работы" 
-                          TextWrapping="Wrap" Margin="0,2"/>
-                <TextBlock Text="3. Система автоматически посчитает сколько времени вы отработали" 
-                          TextWrapping="Wrap" Margin="0,2"/>
-            </StackPanel>
-        </Border>
+        <Button Grid.Row="4" Content="Назад" 
+                Click="BackButton_Click" 
+                Width="80" Height="30"
+                HorizontalAlignment="Left" VerticalAlignment="Top"/>
     </Grid>
 </Window>

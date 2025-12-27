@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTracker.View"
         mc:Ignorable="d"
-        Title="ReportsWindow" Height="450" Width="800">
+        Title="Отчеты" Height="450" Width="800">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -54,11 +54,14 @@
 
             <Button Content="Сохранить в файл" 
                     Command="{Binding ExportToFileCommand}"
-                    Width="158" Height="30" Margin="5"/>
+                    Width="177" Height="30" Margin="5"/>
 
             <TextBlock Text="{Binding TotalTimeText}" 
                       FontWeight="Bold" FontSize="14"
                       VerticalAlignment="Center" Margin="20,0,0,0"/>
         </StackPanel>
+
+        <Button Content="Назад" Click="BackButton_Click" Width="80" Height="30"
+        HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,0,0,0" Grid.Row="3"/>
     </Grid>
 </Window>

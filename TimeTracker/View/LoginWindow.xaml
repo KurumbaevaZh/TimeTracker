@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTracker.View"
         mc:Ignorable="d"
-        Title="LoginWindow" Height="400" Width="400">
+        Title="Вход" Height="400" Width="400">
     
     <Grid>
         <TextBlock HorizontalAlignment="Left" Margin="114,51,0,0" Text="Email" VerticalAlignment="Top"/>

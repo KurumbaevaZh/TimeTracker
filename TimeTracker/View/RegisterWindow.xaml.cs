@@ -11,6 +11,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using TimeTracker.Models;
+using TimeTracker.Services;
 using TimeTracker.ViewModels;
 
 namespace TimeTracker.View
@@ -20,10 +22,14 @@ namespace TimeTracker.View
     /// </summary>
     public partial class RegisterWindow : Window
     {
-        public RegisterWindow(RegisterViewModel viewModel)
+        public RegisterWindow()
         {
             InitializeComponent();
+            var dbContext = new AppDbContext();
+            var authService = new AuthService(dbContext);
+            var viewModel = new RegisterViewModel(authService, dbContext);
             DataContext = viewModel;
+
             viewModel.Done += OnDone;
             viewModel.Cancel += OnCancel;
         }

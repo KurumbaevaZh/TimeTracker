@@ -43,8 +43,7 @@ namespace TimeTracker.ViewModels
         {
             _authService = authService;
             LoginCommand = new RelayCommand(OnLogin, CanLogin);
-            Email = "admin@company.com";
-            Password = "123";
+            
         }
 
         private bool CanLogin()
@@ -60,17 +59,19 @@ namespace TimeTracker.ViewModels
 
                 if (employee != null)
                 {
+                    MessageBox.Show($"Успешный вход! "); 
                     ErrorMessage = string.Empty;
-                    LoginSuccess?.Invoke(employee); 
+                    LoginSuccess?.Invoke(employee);
                 }
                 else
                 {
+                    MessageBox.Show("Сотрудник не найден в базе"); 
                     ErrorMessage = "Неверный email или пароль";
                 }
             }
             catch (Exception ex)
             {
-                ErrorMessage = "Ошибка подключения к базе данных";
+                MessageBox.Show($"Ошибка при входе: {ex.Message}");
             }
         }
 

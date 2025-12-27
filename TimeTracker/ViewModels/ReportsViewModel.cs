@@ -40,13 +40,6 @@ namespace TimeTracker.ViewModels
             set => SetProperty(ref _reportText, value);
         }
 
-        private int _totalMinutes;
-        public int TotalMinutes
-        {
-            get => _totalMinutes;
-            set => SetProperty(ref _totalMinutes, value);
-        }
-
         private string _totalTimeText = "";
         public string TotalTimeText
         {
@@ -74,54 +67,76 @@ namespace TimeTracker.ViewModels
             {
                 if (StartDate > EndDate)
                 {
-                    MessageBox.Show("Дата начала не может быть позже даты конца");
+                    ReportText = "ОШИБКА: Дата начала не может быть позже даты конца\n\n" +
+                                $"Начало: {StartDate:dd.MM.yyyy}\n" +
+                                $"Конец: {EndDate:dd.MM.yyyy}";
                     return;
                 }
 
                 var timeEntries = _context.TimeEntries
                     .Where(te => te.EmployeeId == _currentEmployee.Id &&
-                                te.StartTime.Date >= StartDate &&
-                                te.StartTime.Date <= EndDate &&
-                                te.EndTime != null)
+                                te.StartTime.Date >= StartDate.Date &&
+                                te.StartTime.Date <= EndDate.Date &&
+                                te.EndTime != null &&
+                                te.Duration != null)
+                    .OrderBy(te => te.StartTime)
                     .ToList();
 
-                TotalMinutes = timeEntries.Sum(te => te.Duration ?? 0);
+                Console.WriteLine($"Найдено записей времени: {timeEntries.Count}");
+                Console.WriteLine($"Период: {StartDate:dd.MM.yyyy} - {EndDate:dd.MM.yyyy}");
+                Console.WriteLine($"ID сотрудника: {_currentEmployee.Id}");
 
-                int hours = TotalMinutes / 60;
-                int minutes = TotalMinutes % 60;
-                TotalTimeText = $"Всего времени: {hours} ч {minutes} мин";
-
-                ReportText = $"ОТЧЕТ ПО РАБОЧЕМУ ВРЕМЕНИ \n\n";
-                ReportText += $"Сотрудник: {_currentEmployee.FirstName} {_currentEmployee.LastName}\n";
-                ReportText += $"Период: {StartDate:dd.MM.yyyy} - {EndDate:dd.MM.yyyy}\n";
-                ReportText += $"Общее время: {hours} ч {minutes} мин ({TotalMinutes} минут)\n\n";
-
-                ReportText += "ДЕТАЛИ ПО ДНЯМ \n\n";
-
-                var byDate = timeEntries.GroupBy(te => te.StartTime.Date);
-
-                foreach (var dayGroup in byDate.OrderBy(g => g.Key))
+                if (timeEntries.Any())
                 {
-                    int dayMinutes = dayGroup.Sum(te => te.Duration ?? 0);
-                    int dayHours = dayMinutes / 60;
-                    int dayMins = dayMinutes % 60;
-
-                    ReportText += $"{dayGroup.Key:dd.MM.yyyy} - {dayHours} ч {dayMins} мин\n";
-
-                    foreach (var entry in dayGroup.OrderBy(e => e.StartTime))
+                    foreach (var entry in timeEntries)
                     {
-                        var task = _context.Tasks.FirstOrDefault(t => t.Id == entry.TaskId);
-                        string taskName = task?.Title ?? "Рабочий день";
-
-                        ReportText += $"  {entry.StartTime:HH:mm}-{entry.EndTime:HH:mm}: {taskName} ({entry.Duration} мин)\n";
+                        Console.WriteLine($"Запись: ID={entry.Id}, Start={entry.StartTime}, End={entry.EndTime}, Duration={entry.Duration} мин");
                     }
-                    ReportText += "\n";
                 }
 
-                ReportText += "ВЫПОЛНЕННЫЕ ЗАДАЧИ \n\n";
+                int totalMinutes = timeEntries.Sum(te => te.Duration ?? 0);
+                string totalTimeFormatted = FormatTime(totalMinutes);
+                TotalTimeText = $"Всего времени: {totalTimeFormatted}";
+                ReportText = $"ОТЧЕТ ПО РАБОЧЕМУ ВРЕМЕНИ\n\n";
+                ReportText += $"Сотрудник: {_currentEmployee.FirstName} {_currentEmployee.LastName}\n";
+                ReportText += $"Должность: {_currentEmployee.Position}\n";
+                ReportText += $"Период: {StartDate:dd.MM.yyyy} - {EndDate:dd.MM.yyyy}\n";
 
+                if (timeEntries.Any())
+                {
+                    ReportText += "ДЕТАЛИ ПО ДНЯМ:\n\n";
+                    var byDate = timeEntries.GroupBy(te => te.StartTime.Date)
+                                            .OrderBy(g => g.Key);
+
+                    foreach (var dayGroup in byDate)
+                    {
+                        int dayMinutes = dayGroup.Sum(te => te.Duration ?? 0);
+                        string dayTimeFormatted = FormatTime(dayMinutes);
+
+                        ReportText += $"{dayGroup.Key:dd.MM.yyyy} - {dayTimeFormatted}\n";
+                        foreach (var entry in dayGroup.OrderBy(e => e.StartTime))
+                        {
+                            var task = _context.Tasks.FirstOrDefault(t => t.Id == entry.TaskId);
+                            string taskName = task?.Title ?? "Рабочий день";
+
+                            string start = entry.StartTime.ToString("HH:mm");
+                            string end = entry.EndTime?.ToString("HH:mm") ?? "не завершено";
+                            string duration = entry.Duration?.ToString() ?? "0";
+
+                            ReportText += $"  {start}-{end}: {taskName} ({duration} мин)\n";
+                        }
+                        ReportText += "\n";
+                    }
+                }
+                else
+                {
+                    ReportText += "За выбранный период не найдено записей рабочего времени.\n";
+                }
+
+                ReportText += "\nВЫПОЛНЕННЫЕ ЗАДАЧИ:\n\n";
                 var completedTasks = _context.Tasks
-                    .Where(t => t.AssignedTo == _currentEmployee.Id && t.Status == "Завершена")
+                    .Where(t => t.AssignedTo == _currentEmployee.Id &&
+                               t.Status == "Завершена")
                     .ToList();
 
                 if (completedTasks.Any())
@@ -131,21 +146,43 @@ namespace TimeTracker.ViewModels
                         ReportText += $"• {task.Title}\n";
                         if (!string.IsNullOrEmpty(task.Description))
                         {
-                            ReportText += $"  {task.Description}\n";
+                            ReportText += $"  Описание: {task.Description}\n";
                         }
-                        ReportText += "\n";
+                        ReportText += $"  Статус: {task.Status}\n\n";
                     }
                 }
                 else
                 {
-                    ReportText += "Нет завершенных задач\n";
+                    ReportText += "Нет завершенных задач.\n";
                 }
-
-                MessageBox.Show("Отчет сгенерирован!");
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка: " + ex.Message);
+                ReportText = $"ОШИБКА ПРИ ГЕНЕРАЦИИ ОТЧЕТА:\n{ex.Message}\n\n" +
+                            "Пожалуйста, проверьте соединение с базой данных.";
+                TotalTimeText = "Ошибка";
+                Console.WriteLine($"Ошибка GenerateReport: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+
+        private string FormatTime(int totalMinutes)
+        {
+            if (totalMinutes <= 0) return "0 мин";
+
+            int hours = totalMinutes / 60;
+            int minutes = totalMinutes % 60;
+
+            if (hours > 0 && minutes > 0)
+            {
+                return $"{hours} ч {minutes} мин";
+            }
+            else if (hours > 0)
+            {
+                return $"{hours} ч";
+            }
+            else
+            {
+                return $"{minutes} мин";
             }
         }
 
@@ -153,19 +190,21 @@ namespace TimeTracker.ViewModels
         {
             try
             {
-                var saveDialog = new Microsoft.Win32.SaveFileDialog();
-                saveDialog.Filter = "Текстовые файлы (*.txt)|*.txt";
-                saveDialog.FileName = $"Отчет_{_currentEmployee.LastName}_{DateTime.Today:yyyyMMdd}.txt";
+                var saveDialog = new SaveFileDialog();
+                saveDialog.Filter = "Текстовые файлы (*.txt)|*.txt|Файлы PDF (*.pdf)|*.pdf";
+                saveDialog.FileName = $"Отчет_{_currentEmployee.LastName}_{DateTime.Today:yyyyMMdd}";
+                saveDialog.DefaultExt = ".txt";
 
                 if (saveDialog.ShowDialog() == true)
                 {
-                    System.IO.File.WriteAllText(saveDialog.FileName, ReportText);
-                    MessageBox.Show($"Отчет сохранен в файл:\n{saveDialog.FileName}");
+                    System.IO.File.WriteAllText(saveDialog.FileName, ReportText, Encoding.UTF8);
+                    TotalTimeText = $"Отчет сохранен: {System.IO.Path.GetFileName(saveDialog.FileName)}";
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка сохранения: " + ex.Message);
+                TotalTimeText = "Ошибка сохранения файла";
+                Console.WriteLine($"Ошибка ExportToFile: {ex.Message}");
             }
         }
 

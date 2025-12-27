@@ -11,7 +11,7 @@ using TimeTracker.Models;
 
 namespace TimeTracker.ViewModels
 {
-    internal class TimeTrackerViewModel : INotifyPropertyChanged
+    internal class TimeTrackerViewModel : INotifyPropertyChanged   
     {
         private readonly AppDbContext _context;
         private readonly Employee _currentEmployee;
@@ -76,6 +76,7 @@ namespace TimeTracker.ViewModels
         {
             if (IsWorkDayStarted)
             {
+                UpdateElapsedTime();
                 _elapsedTimeToday = DateTime.Now - _workStartTime;
                 ElapsedTimeText = _elapsedTimeToday.ToString(@"hh\:mm\:ss");
             }
@@ -102,6 +103,7 @@ namespace TimeTracker.ViewModels
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Ошибка проверки рабочего дня: {ex.Message}");
             }
         }
 
@@ -111,6 +113,106 @@ namespace TimeTracker.ViewModels
             {
                 _elapsedTimeToday = DateTime.Now - _workStartTime;
                 ElapsedTimeText = _elapsedTimeToday.ToString(@"hh\:mm\:ss");
+                int totalSeconds = (int)_elapsedTimeToday.TotalSeconds;
+                int totalMinutes = totalSeconds / 60;
+                int hours = totalMinutes / 60;
+                int minutes = totalMinutes % 60;
+                int seconds = totalSeconds % 60;
+
+                if (totalMinutes == 0)
+                {
+                    ElapsedTimeText = $"{seconds} сек";
+                }
+                else if (hours == 0)
+                {
+                    ElapsedTimeText = $"{minutes:00}:{seconds:00}";
+                }
+                else
+                {
+                    ElapsedTimeText = $"{hours:00}:{minutes:00}:{seconds:00}";
+                }
+            }
+        }
+                
+        private void StartWorkDay()
+        {
+            try
+            {
+                _workStartTime = DateTime.Now;
+                IsWorkDayStarted = true;
+                WorkStatus = "Рабочий день начат";
+
+                var timeEntry = new TimeEntry
+                {
+                    EmployeeId = _currentEmployee.Id,
+                    TaskId = null, 
+                    StartTime = DateTime.Now,
+                    EndTime = null,
+                    Duration = null
+                };
+
+                _context.TimeEntries.Add(timeEntry);
+                _context.SaveChanges();
+
+                _timer.Start();
+                UpdateElapsedTime();
+
+                WorkStatus = $"Рабочий день начат в {DateTime.Now:HH:mm}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Ошибка начала рабочего дня: {ex.Message}");
+            }
+        }
+
+        private void EndWorkDay()
+        {
+            if (!IsWorkDayStarted)
+            {
+                MessageBox.Show("Рабочий день еще не начат");
+                return;
+            }
+
+            var endTime = DateTime.Now; 
+            var workDuration = endTime - _workStartTime;
+            int totalMinutes = (int)workDuration.TotalMinutes;
+
+            if (totalMinutes < 0)
+            {
+                totalMinutes = Math.Abs(totalMinutes);
+            }
+
+            try
+            {
+                var todayEntry = _context.TimeEntries
+                    .FirstOrDefault(te => te.EmployeeId == _currentEmployee.Id &&
+                                         te.StartTime.Date == DateTime.UtcNow.Date &&
+                                         te.TaskId == null &&
+                                         te.EndTime == null);
+
+                if (todayEntry != null)
+                {
+                    todayEntry.EndTime = endTime; 
+                    todayEntry.Duration = totalMinutes;
+                    _context.SaveChanges();
+                }
+
+                _timer.Stop();
+                IsWorkDayStarted = false;
+                WorkStatus = "Рабочий день завершен";
+
+                LoadTodaySummary();
+
+                int hours = totalMinutes / 60;
+                int minutes = totalMinutes % 60;
+
+                WorkStatus = $"Рабочий день завершен ({hours} ч {minutes} мин)";
+
+                ElapsedTimeText = $"{hours:00}:{minutes:00}:00";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка завершения рабочего дня: " + ex.Message);
             }
         }
 
@@ -130,6 +232,8 @@ namespace TimeTracker.ViewModels
                     int totalMinutes = todayEntries.Sum(te => te.Duration ?? 0);
                     int hours = totalMinutes / 60;
                     int minutes = totalMinutes % 60;
+                    string timeSummary = FormatTimeSummary(totalMinutes);
+                    TodaySummary = $"Сегодня отработано: {timeSummary}";
 
                     TodaySummary = $"Сегодня отработано: {hours} ч {minutes} мин";
                 }
@@ -140,90 +244,31 @@ namespace TimeTracker.ViewModels
             }
             catch (Exception ex)
             {
-                TodaySummary = "Ошибка загрузки данных";
+                TodaySummary = "Сегодня еще не было рабочих сессий"; 
             }
         }
-
-        private void StartWorkDay()
+        private string FormatTimeSummary(int totalMinutes)
         {
-            try
+            if (totalMinutes <= 0) return "0 мин";
+
+            int hours = totalMinutes / 60;
+            int minutes = totalMinutes % 60;
+
+            if (hours > 0 && minutes > 0)
             {
-                _workStartTime = DateTime.Now;
-                IsWorkDayStarted = true;
-                WorkStatus = "Рабочий день начат";
-
-                var timeEntry = new TimeEntry
-                {
-                    EmployeeId = _currentEmployee.Id,
-                    TaskId = 1, 
-                    StartTime = _workStartTime,
-                    EndTime = null, 
-                    Duration = null
-                };
-
-                _context.TimeEntries.Add(timeEntry);
-                _context.SaveChanges();
-
-                _timer.Start();
-                UpdateElapsedTime();
-
-                MessageBox.Show($"Рабочий день начат в {_workStartTime:HH:mm}");
+                return $"{hours} ч {minutes} мин";
             }
-            catch (Exception ex)
+            else if (hours > 0)
             {
-                MessageBox.Show("Ошибка начала рабочего дня: " + ex.Message);
+                return $"{hours} ч";
+            }
+            else
+            {
+                return $"{minutes} мин";
             }
         }
 
         private bool CanStartWorkDay() => !IsWorkDayStarted;
-
-        private void EndWorkDay()
-        {
-            if (!IsWorkDayStarted)
-            {
-                MessageBox.Show("Рабочий день еще не начат");
-                return;
-            }
-
-            var endTime = DateTime.Now;
-            var workDuration = endTime - _workStartTime;
-            int totalMinutes = (int)workDuration.TotalMinutes;
-            int hours = totalMinutes / 60;
-            int minutes = totalMinutes % 60;
-
-            try
-            {
-                var todayEntry = _context.TimeEntries
-                    .FirstOrDefault(te => te.EmployeeId == _currentEmployee.Id &&
-                                         te.StartTime.Date == DateTime.Today &&
-                                         te.EndTime == null);
-
-                if (todayEntry != null)
-                {
-                    todayEntry.EndTime = endTime;
-                    todayEntry.Duration = totalMinutes;
-                    _context.SaveChanges();
-                }
-
-                _timer.Stop();
-                IsWorkDayStarted = false;
-                WorkStatus = "Рабочий день завершен";
-
-                LoadTodaySummary();
-
-                MessageBox.Show($"Рабочий день завершен!\n" +
-                              $"Начало: {_workStartTime:HH:mm}\n" +
-                              $"Конец: {endTime:HH:mm}\n" +
-                              $"Отработано: {hours} ч {minutes} мин\n" +
-                              $"Всего: {totalMinutes} минут");
-
-                ElapsedTimeText = "00:00:00";
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка завершения рабочего дня: " + ex.Message);
-            }
-        }
 
         private bool CanEndWorkDay() => IsWorkDayStarted;
 

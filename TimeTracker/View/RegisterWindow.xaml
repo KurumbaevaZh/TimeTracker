@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTracker.View"
         mc:Ignorable="d"
-        Title="RegisterWindow" Height="450" Width="500">
+        Title="Регистрация" Height="600" Width="500">
     <Grid>
         <StackPanel>
             <TextBlock Text="Регистрация нового сотрудника" FontSize="16"  Margin="0,0,0,20"/>

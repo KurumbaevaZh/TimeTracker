@@ -15,6 +15,7 @@ namespace TimeTracker.Models
 
         public int ProjectId { get; set; }
         public int AssignedTo { get; set; }
+        public int AssigneeId { get; set; }
 
         public Project Project { get; set; }
         public Employee Assignee { get; set; }

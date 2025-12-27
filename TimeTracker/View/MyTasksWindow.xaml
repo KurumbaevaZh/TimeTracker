@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TimeTracker.View"
         mc:Ignorable="d"
-        Title="MyTasksWindow" Height="450" Width="800">
+        Title="Мои задачи" Height="450" Width="800">
     <Grid Margin="10">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -49,17 +49,15 @@
 
         <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center">
             <Button Content="Начать задачу" Command="{Binding StartTaskCommand}"
-                    Width="110" Height="30" Margin="5"/>
+                    Width="128" Height="30" Margin="5"/>
 
             <Button Content="Завершить задачу" Command="{Binding CompleteTaskCommand}"
-                    Width="120" Height="30" Margin="5"/>
-
-            <Button Content="Добавить комментарий" Command="{Binding AddCommentCommand}"
-                    Width="140" Height="30" Margin="5"/>
+                    Width="161" Height="30" Margin="5"/>
         </StackPanel>
 
-        <StatusBar Grid.Row="4">
-            <TextBlock Text="{Binding MyTasks.Count, StringFormat=Всего задач: {0}}"/>
-        </StatusBar>
+        
+
+        <Button Content="Назад" Click="BackButton_Click" Width="80" Height="30"
+        HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0" Grid.Row="3"/>
     </Grid>
 </Window>

@@ -6,8 +6,64 @@
         xmlns:local="clr-namespace:TimeTracker"
         xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="600" Width="800">
     <Grid>
-        
+        <TextBlock x:Name="WelcomeText" 
+                   Text="Добро пожаловать в систему учета рабочего времени!" 
+                   HorizontalAlignment="Center" VerticalAlignment="Top"
+                   FontSize="16" FontWeight="Bold" TextWrapping="Wrap"
+                   Margin="20,20,20,0" TextAlignment="Center"/>
+
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Top" 
+                    Margin="20,70,20,0">
+            <TextBlock x:Name="EmployeeInfo" 
+                       FontSize="14" FontWeight="SemiBold"
+                       TextAlignment="Center"/>
+            <TextBlock x:Name="DepartmentInfo" 
+                       FontSize="12" FontStyle="Italic"
+                       TextAlignment="Center" Margin="0,5,0,0"/>
+        </StackPanel>
+
+        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" 
+                    Margin="20" Width="200">
+
+            <Button Content="Учет времени" 
+                    Click="OpenTimeTracker_Click"
+                    Width="180" Height="35" Margin="0,0,0,10"
+                    FontSize="14" FontWeight="Bold"/>
+
+            <Button Content="Мои задачи" 
+                    Click="OpenMyTasks_Click"
+                    Width="180" Height="35" Margin="0,0,0,10"
+                    FontSize="14"/>
+
+            <Button Content="Все задачи" 
+                    Click="OpenTaskManager_Click"
+                    Width="180" Height="35" Margin="0,0,0,10"
+                    FontSize="14"/>
+
+            <Button Content="Отчеты" 
+                    Click="OpenReports_Click"
+                    Width="180" Height="35" Margin="0,0,0,10"
+                    FontSize="14"/>
+
+            <Button x:Name="RegisterButton" 
+                    Content="Регистрация"
+                    Click="OpenRegisterWindow_Click"
+                    Width="180" Height="35" Margin="0,0,0,10"
+                    FontSize="14"
+                    Visibility="Collapsed"/>
+
+            <Button x:Name="TeamManagementButton" 
+                    Content="Управление отделом"
+                    Click="OpenTeamManagement_Click"
+                    Width="180" Height="35"
+                    FontSize="14"
+                    Visibility="Collapsed"/>
+        </StackPanel>
+
+        <StatusBar VerticalAlignment="Bottom">
+            <TextBlock x:Name="StatusText" Text="Готов к работе"/>
+        </StatusBar>
     </Grid>
 </Window>

@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -6,7 +8,6 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using Microsoft.EntityFrameworkCore;
 using TimeTracker.Models;
 
 namespace TimeTracker.ViewModels
@@ -16,11 +17,12 @@ namespace TimeTracker.ViewModels
         private readonly AppDbContext _context;
         private Employee _currentEmployee;
 
-        private List<Models.Task> _tasks;
-        public List<Models.Task> Tasks
+        private List<Models.Task> _allTasks;
+        private List<Models.Task> _filteredTasks;
+        public List<Models.Task> FilteredTasks
         {
-            get => _tasks;
-            set => SetProperty(ref _tasks, value);
+            get => _filteredTasks;
+            set => SetProperty(ref _filteredTasks, value);
         }
 
         private List<Project> _projects;
@@ -77,42 +79,93 @@ namespace TimeTracker.ViewModels
             }
         }
 
+        private string _newTaskTitle;
+        public string NewTaskTitle
+        {
+            get => _newTaskTitle;
+            set => SetProperty(ref _newTaskTitle, value);
+        }
+
+        private string _newTaskDescription;
+        public string NewTaskDescription
+        {
+            get => _newTaskDescription;
+            set => SetProperty(ref _newTaskDescription, value);
+        }
+
+        private Project _selectedProjectForNewTask;
+        public Project SelectedProjectForNewTask
+        {
+            get => _selectedProjectForNewTask;
+            set => SetProperty(ref _selectedProjectForNewTask, value);
+        }
+
+        private Employee _selectedEmployeeForNewTask;
+        public Employee SelectedEmployeeForNewTask
+        {
+            get => _selectedEmployeeForNewTask;
+            set => SetProperty(ref _selectedEmployeeForNewTask, value);
+        }
+
+        private string _selectedStatusForNewTask = "Новая";
+        public string SelectedStatusForNewTask
+        {
+            get => _selectedStatusForNewTask;
+            set => SetProperty(ref _selectedStatusForNewTask, value);
+        }
+
         public List<string> StatusFilters { get; } = new List<string>
         {
             "Все", "Новая", "В работе", "На проверке", "Завершена"
         };
 
-        public RelayCommand LoadTasksCommand { get; }
+        public List<string> StatusesForNewTask { get; } = new List<string>
+        {
+            "Новая", "В работе", "На проверке", "Завершена"
+        };
+
+        public RelayCommand LoadDataCommand { get; }
         public RelayCommand CreateTaskCommand { get; }
         public RelayCommand EditTaskCommand { get; }
         public RelayCommand DeleteTaskCommand { get; }
         public RelayCommand ChangeStatusCommand { get; }
+        public RelayCommand ClearFormCommand { get; }
 
         public TaskManagerViewModel(AppDbContext context, Employee currentEmployee)
         {
             _context = context;
             _currentEmployee = currentEmployee;
 
-            LoadTasksCommand = new RelayCommand(LoadData);
-            CreateTaskCommand = new RelayCommand(CreateTask);
+            LoadDataCommand = new RelayCommand(LoadData);
+            CreateTaskCommand = new RelayCommand(CreateTask, CanCreateTask);
             EditTaskCommand = new RelayCommand(EditTask, CanEditTask);
             DeleteTaskCommand = new RelayCommand(DeleteTask, CanDeleteTask);
             ChangeStatusCommand = new RelayCommand(ChangeStatus, CanChangeStatus);
+            ClearFormCommand = new RelayCommand(ClearForm);
 
             LoadData();
+
+            Console.WriteLine($"Загружено сотрудников: {Employees?.Count ?? 0}");
+            Console.WriteLine($"Загружено проектов: {Projects?.Count ?? 0}");
+
+            if (Employees != null)
+            {
+                foreach (var emp in Employees.Take(5))
+                {
+                    Console.WriteLine($"Сотрудник: {emp.Id} - {emp.FirstName} {emp.LastName}");
+                }
+            }
         }
 
         private void LoadData()
         {
             try
             {
-                Tasks = _context.Tasks
-                    .Include(t => t.Project)
-                    .Include(t => t.Assignee)
-                    .ToList();
-
+                _allTasks = _context.Tasks.ToList();
+                FilteredTasks = _allTasks;
                 Projects = _context.Projects.ToList();
                 Employees = _context.Employees.ToList();
+                ClearForm();
             }
             catch (Exception ex)
             {
@@ -122,48 +175,126 @@ namespace TimeTracker.ViewModels
 
         private void FilterTasks()
         {
-            if (Tasks == null) return;
+            if (_allTasks == null) return;
 
-            var filteredTasks = Tasks.AsEnumerable();
+            var filtered = _allTasks.AsEnumerable();
 
             if (!string.IsNullOrWhiteSpace(SearchText))
             {
-                filteredTasks = filteredTasks.Where(t =>
+                filtered = filtered.Where(t =>
                     t.Title.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     (t.Description != null && t.Description.Contains(SearchText, StringComparison.OrdinalIgnoreCase)));
             }
 
             if (SelectedProjectFilter != null)
             {
-                filteredTasks = filteredTasks.Where(t => t.ProjectId == SelectedProjectFilter.Id);
+                filtered = filtered.Where(t => t.ProjectId == SelectedProjectFilter.Id);
             }
 
             if (SelectedStatusFilter != "Все")
             {
-                filteredTasks = filteredTasks.Where(t => t.Status == SelectedStatusFilter);
+                filtered = filtered.Where(t => t.Status == SelectedStatusFilter);
             }
 
-            Tasks = filteredTasks.ToList();
+            FilteredTasks = filtered.ToList();
+        }
+
+        private bool CanCreateTask()
+        {
+            return !string.IsNullOrWhiteSpace(NewTaskTitle) &&
+                   SelectedEmployeeForNewTask != null &&
+                   SelectedProjectForNewTask != null &&
+                   !string.IsNullOrWhiteSpace(SelectedStatusForNewTask);
         }
 
         private void CreateTask()
         {
-            var newTask = new Models.Task
+            try
             {
-                Title = "Новая задача",
-                Description = "Описание задачи",
-                Status = "Новая"
-            };
+                if (string.IsNullOrWhiteSpace(NewTaskTitle))
+                {
+                    MessageBox.Show("Введите название задачи", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
 
-            Tasks.Add(newTask);
-            SelectedTask = newTask;
+                if (SelectedEmployeeForNewTask == null)
+                {
+                    MessageBox.Show("Выберите исполнителя", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (SelectedProjectForNewTask == null)
+                {
+                    MessageBox.Show("Выберите проект", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+
+                var newTask = new Models.Task
+                {
+                    Title = NewTaskTitle.Trim(),
+                    Description = NewTaskDescription?.Trim(),
+                    Status = SelectedStatusForNewTask,
+                    ProjectId = SelectedProjectForNewTask.Id,       
+                    AssignedTo = SelectedEmployeeForNewTask.Id,     
+                    AssigneeId = SelectedEmployeeForNewTask.Id      
+                };
+
+                _context.Tasks.Add(newTask);
+                _context.SaveChanges();
+                LoadData();
+                ClearForm();
+            }
+            catch (DbUpdateException dbEx)
+            {
+                string errorMessage = "Ошибка создания задачи:\n";
+
+                if (dbEx.InnerException is PostgresException pgEx)
+                {
+                    errorMessage += $"Код ошибки: {pgEx.SqlState}\n";
+                    errorMessage += $"Сообщение: {pgEx.MessageText}\n";
+
+                    if (pgEx.SqlState == "23503")
+                    {
+                        errorMessage += "\nПРОБЛЕМА С ВНЕШНИМ КЛЮЧОМ!\n";
+                        errorMessage += "Проверьте, что:\n";
+                        errorMessage += $"1. Проект с ID={SelectedProjectForNewTask?.Id} существует\n";
+                        errorMessage += $"2. Сотрудник с ID={SelectedEmployeeForNewTask?.Id} существует\n";
+
+                        errorMessage += "\nТекущие данные в БД:\n";
+
+                        try
+                        {
+                            var projects = _context.Projects.Select(p => p.Id).ToList();
+                            var employees = _context.Employees.Select(e => e.Id).ToList();
+
+                            errorMessage += $"Проекты (ID): {string.Join(", ", projects)}\n";
+                            errorMessage += $"Сотрудники (ID): {string.Join(", ", employees)}\n";
+                        }
+                        catch { }
+                    }
+                }
+
+                MessageBox.Show(errorMessage, "Ошибка базы данных", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Неожиданная ошибка: {ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
         }
 
         private void EditTask()
         {
             if (SelectedTask != null)
             {
-                MessageBox.Show($"Редактирование задачи: {SelectedTask.Title}");
+                NewTaskTitle = SelectedTask.Title;
+                NewTaskDescription = SelectedTask.Description;
+                SelectedStatusForNewTask = SelectedTask.Status;
+                SelectedProjectForNewTask = Projects.FirstOrDefault(p => p.Id == SelectedTask.ProjectId);
+                SelectedEmployeeForNewTask = Employees.FirstOrDefault(e => e.Id == SelectedTask.AssignedTo);
+
+                MessageBox.Show($"Редактирование задачи: {SelectedTask.Title}\nЗаполните форму и нажмите 'Создать задачу' для сохранения изменений");
             }
         }
 
@@ -171,10 +302,22 @@ namespace TimeTracker.ViewModels
 
         private void DeleteTask()
         {
-            if (SelectedTask != null && MessageBox.Show("Удалить задачу?", "Подтверждение", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            if (SelectedTask != null && MessageBox.Show($"Удалить задачу '{SelectedTask.Title}'?",
+                "Подтверждение", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                Tasks.Remove(SelectedTask);
-                SelectedTask = null;
+                try
+                {
+                    _context.Tasks.Remove(SelectedTask);
+                    _context.SaveChanges();
+
+                    LoadData();
+
+                    MessageBox.Show($"Задача '{SelectedTask.Title}' удалена");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка удаления задачи: " + ex.Message);
+                }
             }
         }
 
@@ -188,10 +331,31 @@ namespace TimeTracker.ViewModels
                 var currentIndex = Array.IndexOf(statuses, SelectedTask.Status);
                 var nextIndex = (currentIndex + 1) % statuses.Length;
                 SelectedTask.Status = statuses[nextIndex];
+
+                try
+                {
+                    _context.SaveChanges();
+                    FilterTasks();
+
+                    MessageBox.Show($"Статус задачи '{SelectedTask.Title}' изменен на '{SelectedTask.Status}'");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Ошибка изменения статуса: " + ex.Message);
+                }
             }
         }
 
         private bool CanChangeStatus() => SelectedTask != null;
+
+        private void ClearForm()
+        {
+            NewTaskTitle = "";
+            NewTaskDescription = "";
+            SelectedStatusForNewTask = "Новая";
+            SelectedProjectForNewTask = null;
+            SelectedEmployeeForNewTask = null;
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
